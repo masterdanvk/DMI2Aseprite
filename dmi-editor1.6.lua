@@ -82,15 +82,30 @@ function mirrorEastToWest()
   local width = sprite.width
   local height = sprite.height
   
-  -- Ensure sprite dimensions are multiples of 32
-  if width % 32 ~= 0 or height % 32 ~= 0 then
-    app.alert("Sprite dimensions must be multiples of 32x32")
+  -- Get frame size from user or use defaults
+  local dlg = Dialog("Frame Size")
+  dlg:number{ id = "cellWidth", label = "Frame Width:", text = "32", decimals = 0 }
+  dlg:number{ id = "cellHeight", label = "Frame Height:", text = "32", decimals = 0 }
+  dlg:button{ id = "ok", text = "OK" }
+  dlg:button{ id = "cancel", text = "Cancel" }
+  dlg:show()
+  
+  if not dlg.data.ok then
+    return
+  end
+  
+  local cellWidth = dlg.data.cellWidth
+  local cellHeight = dlg.data.cellHeight
+  
+  -- Ensure sprite dimensions are multiples of the cell size
+  if width % cellWidth ~= 0 or height % cellHeight ~= 0 then
+    app.alert("Sprite dimensions must be multiples of the frame size")
     return
   end
   
   -- Calculate total number of cells and columns
-  local columns = width / 32
-  local rows = height / 32
+  local columns = width / cellWidth
+  local rows = height / cellHeight
   local totalCells = columns * rows
   
   -- Count how many sprites we'll process
@@ -129,43 +144,43 @@ function mirrorEastToWest()
         -- We only care about East cells
         if direction == eastIndex then
           -- Calculate positions
-          local eastX = col * 32
-          local eastY = row * 32
+          local eastX = col * cellWidth
+          local eastY = row * cellHeight
           
           -- Check if next cell exists and is West
           local nextCellIndex = cellIndex + 1
           if nextCellIndex < totalCells and nextCellIndex % 4 == westIndex then
             local nextCol = nextCellIndex % columns
             local nextRow = math.floor(nextCellIndex / columns)
-            local westX = nextCol * 32
-            local westY = nextRow * 32
+            local westX = nextCol * cellWidth
+            local westY = nextRow * cellHeight
             
             -- Copy the east sprite to a temporary buffer
-            local eastImage = Image(32, 32, sprite.colorMode)
+            local eastImage = Image(cellWidth, cellHeight, sprite.colorMode)
             
             -- Clear the temporary buffer first
             eastImage:clear(app.pixelColor.rgba(0, 0, 0, 0))
             
             -- Copy east sprite pixels to the buffer
-            for py = 0, 31 do
-              for px = 0, 31 do
+            for py = 0, cellHeight - 1 do
+              for px = 0, cellWidth - 1 do
                 local pixelColor = fullImage:getPixel(eastX + px, eastY + py)
                 eastImage:putPixel(px, py, pixelColor)
               end
             end
             
             -- Clear the west area
-            for py = 0, 31 do
-              for px = 0, 31 do
+            for py = 0, cellHeight - 1 do
+              for px = 0, cellWidth - 1 do
                 fullImage:putPixel(westX + px, westY + py, app.pixelColor.rgba(0, 0, 0, 0))
               end
             end
             
             -- Copy the flipped east image to the west position
-            for py = 0, 31 do
-              for px = 0, 31 do
+            for py = 0, cellHeight - 1 do
+              for px = 0, cellWidth - 1 do
                 local pixelColor = eastImage:getPixel(px, py)
-                fullImage:putPixel(westX + (31 - px), westY + py, pixelColor)
+                fullImage:putPixel(westX + (cellWidth - 1 - px), westY + py, pixelColor)
               end
             end
             
@@ -200,6 +215,9 @@ function mirrorEastToWest()
           break
         end
       end
+      
+      -- Refresh the screen to show changes
+      app.refresh()
     end
   end)
   
@@ -222,15 +240,30 @@ function deleteWestFrames()
   local width = sprite.width
   local height = sprite.height
   
-  -- Ensure sprite dimensions are multiples of 32
-  if width % 32 ~= 0 or height % 32 ~= 0 then
-    app.alert("Sprite dimensions must be multiples of 32x32")
+  -- Get frame size from user or use defaults
+  local dlg = Dialog("Frame Size")
+  dlg:number{ id = "cellWidth", label = "Frame Width:", text = "32", decimals = 0 }
+  dlg:number{ id = "cellHeight", label = "Frame Height:", text = "32", decimals = 0 }
+  dlg:button{ id = "ok", text = "OK" }
+  dlg:button{ id = "cancel", text = "Cancel" }
+  dlg:show()
+  
+  if not dlg.data.ok then
+    return
+  end
+  
+  local cellWidth = dlg.data.cellWidth
+  local cellHeight = dlg.data.cellHeight
+  
+  -- Ensure sprite dimensions are multiples of the cell size
+  if width % cellWidth ~= 0 or height % cellHeight ~= 0 then
+    app.alert("Sprite dimensions must be multiples of the frame size")
     return
   end
   
   -- Calculate total number of cells and columns
-  local columns = width / 32
-  local rows = height / 32
+  local columns = width / cellWidth
+  local rows = height / cellHeight
   local totalCells = columns * rows
   
   -- Count how many west frames we'll delete
@@ -268,12 +301,12 @@ function deleteWestFrames()
         -- We only care about West cells
         if direction == westIndex then
           -- Calculate positions
-          local westX = col * 32
-          local westY = row * 32
+          local westX = col * cellWidth
+          local westY = row * cellHeight
           
           -- Clear the west frame
-          for py = 0, 31 do
-            for px = 0, 31 do
+          for py = 0, cellHeight - 1 do
+            for px = 0, cellWidth - 1 do
               fullImage:putPixel(westX + px, westY + py, app.pixelColor.rgba(0, 0, 0, 0))
             end
           end
@@ -308,6 +341,9 @@ function deleteWestFrames()
           break
         end
       end
+      
+      -- Refresh the screen to show changes
+      app.refresh()
     end
   end)
   
